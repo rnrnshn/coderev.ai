@@ -1,0 +1,245 @@
+---
+description: "Comprehensive development guidelines for an AI-powered code review agent with enhanced performance analysis capabilities. This agent uses Google's Gemini AI model to analyze code changes, detect performance bottlenecks, memory leaks, and algorithmic inefficiencies. The rules cover TypeScript development patterns, AI tool creation, performance analysis techniques, memory leak detection, algorithm complexity analysis, and optimization strategies for both the agent itself and the code it reviews."
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.js"
+  - "**/*.jsx"
+  - "**/*.json"
+  - "**/*.md"
+  - "**/package.json"
+  - "**/tsconfig.json"
+  - "**/README.md"
+  - "**/tools.ts"
+  - "**/prompts.ts"
+  - "**/index.ts"
+  - "**/performance-example.ts"
+alwaysApply: true
+---
+
+# Cursor Rules for AI Code Review & Performance Analysis Agent
+
+## Project Overview
+This is an AI-powered code review agent with enhanced performance analysis capabilities. It uses Google's Gemini AI model to analyze code changes, detect performance bottlenecks, memory leaks, and algorithmic inefficiencies.
+
+## Core Technologies
+- **Runtime**: Bun (v1.2.22+)
+- **Language**: TypeScript
+- **AI Model**: Google Gemini 2.5 Flash
+- **AI SDK**: Vercel AI SDK
+- **Git Integration**: simple-git
+- **Validation**: Zod schemas
+
+## Project Structure
+```
+my-agent/
+├── index.ts              # Main application entry point
+├── tools.ts              # AI tool definitions and implementations
+├── prompts.ts            # System prompts for the AI agent
+├── performance-example.ts # Example file demonstrating performance patterns
+├── package.json          # Dependencies and configuration
+├── tsconfig.json         # TypeScript configuration
+└── README.md             # Documentation
+```
+
+## Development Guidelines
+
+### Code Style & Standards
+- Use TypeScript with strict type checking
+- Follow functional programming patterns where appropriate
+- Use Zod for schema validation and type safety
+- Prefer async/await over Promises
+- Use descriptive variable and function names
+- Add JSDoc comments for complex functions
+
+### Performance Analysis Focus
+- Always consider performance implications of code changes
+- Use efficient algorithms and data structures
+- Avoid synchronous I/O operations in favor of async alternatives
+- Implement proper error handling and resource cleanup
+- Consider memory usage and potential leaks
+- Optimize for both time and space complexity
+
+### AI Tool Development
+- Each tool should have a clear, single responsibility
+- Use Zod schemas for input validation
+- Provide comprehensive error handling
+- Include detailed descriptions for AI model understanding
+- Return structured, actionable results
+
+### File Organization
+- Keep tools in `tools.ts` with clear separation of concerns
+- Maintain system prompts in `prompts.ts`
+- Use descriptive function names that indicate their purpose
+- Group related functionality together
+
+## Performance Analysis Patterns
+
+### Memory Leak Detection
+- Look for unclosed event listeners, timers, and resources
+- Detect circular references and memory accumulation
+- Identify missing cleanup in constructors/destructors
+- Check for proper resource management
+
+### Algorithm Efficiency
+- Analyze time complexity (O(n), O(n²), etc.)
+- Identify nested loops and expensive operations
+- Suggest better data structures (Map, Set, etc.)
+- Recommend optimization strategies
+
+### Performance Bottlenecks
+- Detect inefficient DOM manipulations
+- Find expensive operations and slow patterns
+- Identify synchronous I/O operations
+- Suggest caching and batching opportunities
+
+## Code Review Standards
+
+### Review Focus Areas
+1. **Correctness** - Bug detection and logic validation
+2. **Clarity** - Code readability and documentation
+3. **Maintainability** - Code structure and complexity
+4. **Consistency** - Adherence to coding standards
+5. **Performance Analysis** - PRIMARY FOCUS
+6. **Security** - Vulnerability assessment
+7. **Testing** - Test coverage and quality
+8. **Scalability** - Robustness and error handling
+
+### Performance Review Guidelines
+- Always analyze algorithmic complexity
+- Check for memory leak patterns
+- Identify performance bottlenecks
+- Suggest optimization opportunities
+- Provide concrete improvement examples
+
+## Tool Development Patterns
+
+### Tool Structure
+```typescript
+const toolSchema = z.object({
+  // Define input parameters with descriptions
+});
+
+type ToolInput = z.infer<typeof toolSchema>;
+
+async function toolFunction({ param }: ToolInput) {
+  try {
+    // Implementation with error handling
+    return {
+      // Structured results
+    };
+  } catch (error) {
+    return {
+      error: `Error message: ${error.message}`
+    };
+  }
+}
+
+export const toolName = tool({
+  description: "Clear description of tool purpose",
+  inputSchema: toolSchema,
+  execute: toolFunction,
+});
+```
+
+### Error Handling
+- Always wrap tool implementations in try-catch
+- Provide meaningful error messages
+- Return structured error objects
+- Log errors appropriately
+
+### Performance Considerations
+- Use async operations for I/O
+- Implement concurrency where appropriate
+- Avoid blocking operations
+- Consider memory usage in large operations
+
+## Testing & Validation
+
+### Tool Testing
+- Test with various input scenarios
+- Verify error handling paths
+- Check performance with large inputs
+- Validate output structure
+
+### Performance Testing
+- Test with large files and directories
+- Verify memory usage patterns
+- Check for potential bottlenecks
+- Validate algorithm complexity analysis
+
+## Documentation Standards
+
+### Code Documentation
+- Use JSDoc for function documentation
+- Include parameter descriptions
+- Document return value structure
+- Explain complex algorithms
+
+### README Updates
+- Keep feature list current
+- Update usage examples
+- Document new capabilities
+- Include performance analysis examples
+
+## Git Workflow
+
+### Commit Standards
+- Use conventional commit format
+- Include breaking changes in commit message
+- Reference issues and PRs
+- Keep commits focused and atomic
+
+### Branch Strategy
+- Use feature branches for new capabilities
+- Keep main branch stable
+- Test performance analysis tools thoroughly
+- Update documentation with changes
+
+## Performance Optimization Guidelines
+
+### For the Agent Itself
+- Use async I/O operations
+- Implement concurrent processing where possible
+- Avoid synchronous file operations
+- Optimize regex patterns for large files
+- Consider memory usage in directory scans
+
+### For Code Being Reviewed
+- Identify O(n²) and higher complexity
+- Detect memory leak patterns
+- Find inefficient data structures
+- Suggest algorithm optimizations
+- Recommend caching strategies
+
+## Security Considerations
+- Validate all inputs with Zod schemas
+- Sanitize file paths and content
+- Handle errors gracefully
+- Avoid code injection vulnerabilities
+- Use secure file operations
+
+## Maintenance Guidelines
+- Keep dependencies updated
+- Monitor performance of analysis tools
+- Refactor complex functions
+- Add new performance patterns as needed
+- Update documentation regularly
+
+## Common Patterns to Detect
+
+### Performance Anti-patterns
+- Nested loops without optimization
+- Inefficient array operations
+- Synchronous I/O in async contexts
+- Memory leaks from unclosed resources
+- Expensive DOM manipulations
+
+### Optimization Opportunities
+- Replace O(n) lookups with O(1) data structures
+- Batch operations instead of individual calls
+- Use lazy loading for large datasets
+- Implement caching for repeated operations
+- Optimize regex patterns and string operations
+
+Remember: This agent's primary purpose is to help developers write performant, maintainable code by identifying issues early in the development process.
