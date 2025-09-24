@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import { simpleGit } from "simple-git";
 import { z } from "zod";
-import { writeFileSync } from "fs";
+import { writeFileSync, readFileSync, readdirSync, statSync } from "fs";
+import { join, extname } from "path";
 
 const excludeFiles = ["dist", "bun.lock"];
 
@@ -140,4 +141,345 @@ export const writeReviewToMarkdownTool = tool({
   description: "Writes a code review to a markdown file with proper formatting",
   inputSchema: markdownReviewSchema,
   execute: writeReviewToMarkdown,
+});
+
+// Performance Analysis Tools
+
+// File analysis schema
+const fileAnalysisSchema = z.object({
+  filePath: z.string().min(1).describe("The path to the file to analyze"),
+});
+
+type FileAnalysisInput = z.infer<typeof fileAnalysisSchema>;
+
+// Analyze file for performance issues
+async function analyzeFilePerformance({ filePath }: FileAnalysisInput) {
+  try {
+    const content = readFileSync(filePath, 'utf8');
+    const analysis = {
+      file: filePath,
+      size: content.length,
+      lines: content.split('\n').length,
+      issues: [] as string[],
+      complexity: 0,
+      performanceScore: 100
+    };
+
+    // Check for common performance anti-patterns
+    const performancePatterns = [
+      {
+        pattern: /for\s*\(\s*let\s+\w+\s*=\s*0\s*;\s*\w+\s*<\s*array\.length\s*;\s*\w+\+\+\)/g,
+        issue: "Inefficient array iteration - consider using for...of or forEach",
+        severity: 2
+      },
+      {
+        pattern: /\.innerHTML\s*=/g,
+        issue: "innerHTML assignment can cause performance issues - consider using textContent or createElement",
+        severity: 3
+      },
+      {
+        pattern: /document\.getElementById\([^)]+\)\.style\./g,
+        issue: "Multiple style manipulations - consider batching or using CSS classes",
+        severity: 2
+      },
+      {
+        pattern: /setTimeout\([^,]+,\s*0\)/g,
+        issue: "setTimeout with 0 delay - consider using requestAnimationFrame or Promise.resolve()",
+        severity: 1
+      },
+      {
+        pattern: /JSON\.parse\(JSON\.stringify\(/g,
+        issue: "Deep cloning with JSON - consider using structuredClone or libraries like Lodash",
+        severity: 2
+      },
+      {
+        pattern: /\.filter\(\)\.map\(\)/g,
+        issue: "Chained filter and map - consider combining into single reduce operation",
+        severity: 2
+      },
+      {
+        pattern: /new\s+Array\([^)]+\)\.fill\(/g,
+        issue: "Array creation with fill - consider using Array.from() for better performance",
+        severity: 1
+      },
+      {
+        pattern: /\.includes\([^)]+\)\s*&&\s*\.includes\(/g,
+        issue: "Multiple includes calls - consider using Set for O(1) lookups",
+        severity: 3
+      }
+    ];
+
+    // Check for memory leak patterns
+    const memoryLeakPatterns = [
+      {
+        pattern: /addEventListener\([^,]+,\s*[^)]+\)(?!.*removeEventListener)/g,
+        issue: "Event listener added without corresponding removeEventListener - potential memory leak",
+        severity: 4
+      },
+      {
+        pattern: /setInterval\([^)]+\)(?!.*clearInterval)/g,
+        issue: "setInterval without clearInterval - potential memory leak",
+        severity: 4
+      },
+      {
+        pattern: /setTimeout\([^)]+\)(?!.*clearTimeout)/g,
+        issue: "setTimeout without clearTimeout - potential memory leak",
+        severity: 3
+      },
+      {
+        pattern: /new\s+Image\(\)(?!.*onload|.*onerror)/g,
+        issue: "Image object created without proper cleanup - potential memory leak",
+        severity: 3
+      }
+    ];
+
+    // Analyze performance patterns
+    performancePatterns.forEach(({ pattern, issue, severity }) => {
+      const matches = content.match(pattern);
+      if (matches) {
+        analysis.issues.push(`${issue} (${matches.length} occurrences)`);
+        analysis.performanceScore -= severity * matches.length;
+      }
+    });
+
+    // Analyze memory leak patterns
+    memoryLeakPatterns.forEach(({ pattern, issue, severity }) => {
+      const matches = content.match(pattern);
+      if (matches) {
+        analysis.issues.push(`${issue} (${matches.length} occurrences)`);
+        analysis.performanceScore -= severity * matches.length;
+      }
+    });
+
+    // Calculate cyclomatic complexity
+    const complexityKeywords = ['if', 'else', 'while', 'for', 'switch', 'case', 'catch', '&&', '||', '?', ':'];
+    complexityKeywords.forEach(keyword => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'g');
+      const matches = content.match(regex);
+      if (matches) {
+        analysis.complexity += matches.length;
+      }
+    });
+
+    // Check for large functions
+    const functions = content.match(/function\s+\w+\([^)]*\)\s*\{[^}]*\}/g);
+    if (functions) {
+      functions.forEach(func => {
+        const lines = func.split('\n').length;
+        if (lines > 50) {
+          analysis.issues.push(`Large function detected (${lines} lines) - consider breaking into smaller functions`);
+          analysis.performanceScore -= 5;
+        }
+      });
+    }
+
+    // Check for nested loops
+    const nestedLoops = content.match(/for\s*\([^}]*\{[^}]*for\s*\([^}]*\{/g);
+    if (nestedLoops) {
+      analysis.issues.push(`Nested loops detected - consider optimizing algorithm complexity`);
+      analysis.performanceScore -= 10;
+    }
+
+    analysis.performanceScore = Math.max(0, analysis.performanceScore);
+
+    return {
+      ...analysis,
+      recommendations: analysis.issues.length > 0 ? [
+        "Consider refactoring to improve performance",
+        "Review memory management patterns",
+        "Optimize algorithm complexity where possible"
+      ] : ["File shows good performance practices"]
+    };
+
+  } catch (error) {
+    return {
+      file: filePath,
+      error: `Failed to analyze file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      performanceScore: 0
+    };
+  }
+}
+
+export const analyzeFilePerformanceTool = tool({
+  description: "Analyzes a file for performance issues, memory leaks, and algorithm efficiency",
+  inputSchema: fileAnalysisSchema,
+  execute: analyzeFilePerformance,
+});
+
+// Directory performance analysis
+const directoryAnalysisSchema = z.object({
+  rootDir: z.string().min(1).describe("The root directory to analyze"),
+  fileExtensions: z.array(z.string()).optional().describe("File extensions to analyze").default([".ts", ".js", ".tsx", ".jsx"]),
+});
+
+type DirectoryAnalysisInput = z.infer<typeof directoryAnalysisSchema>;
+
+async function analyzeDirectoryPerformance({ rootDir, fileExtensions }: DirectoryAnalysisInput) {
+  const results = {
+    totalFiles: 0,
+    analyzedFiles: 0,
+    performanceIssues: 0,
+    memoryLeaks: 0,
+    averagePerformanceScore: 0,
+    files: [] as any[],
+    summary: {
+      criticalIssues: 0,
+      warnings: 0,
+      recommendations: [] as string[]
+    }
+  };
+
+  function scanDirectory(dir: string): string[] {
+    const files: string[] = [];
+    try {
+      const items = readdirSync(dir);
+      for (const item of items) {
+        const fullPath = join(dir, item);
+        const stat = statSync(fullPath);
+        
+        if (stat.isDirectory() && !excludeFiles.includes(item)) {
+          files.push(...scanDirectory(fullPath));
+        } else if (stat.isFile() && fileExtensions.includes(extname(item))) {
+          files.push(fullPath);
+        }
+      }
+    } catch (error) {
+      // Skip directories we can't read
+    }
+    return files;
+  }
+
+  const files = scanDirectory(rootDir);
+  results.totalFiles = files.length;
+
+  for (const file of files) {
+    try {
+      const analysis = await analyzeFilePerformance({ filePath: file });
+      results.files.push(analysis);
+      results.analyzedFiles++;
+      
+      if ('issues' in analysis && analysis.issues) {
+        results.performanceIssues += analysis.issues.length;
+        results.averagePerformanceScore += analysis.performanceScore;
+        
+        // Categorize issues
+        analysis.issues.forEach((issue: string) => {
+          if (issue.includes('memory leak') || issue.includes('removeEventListener') || issue.includes('clearInterval')) {
+            results.memoryLeaks++;
+            results.summary.criticalIssues++;
+          } else if (issue.includes('performance') || issue.includes('inefficient')) {
+            results.summary.warnings++;
+          }
+        });
+      }
+    } catch (error) {
+      // Skip files that can't be analyzed
+    }
+  }
+
+  if (results.analyzedFiles > 0) {
+    results.averagePerformanceScore = Math.round(results.averagePerformanceScore / results.analyzedFiles);
+  }
+
+  // Generate recommendations
+  if (results.memoryLeaks > 0) {
+    results.summary.recommendations.push("Address memory leaks immediately - they can cause application crashes");
+  }
+  if (results.performanceIssues > 10) {
+    results.summary.recommendations.push("Consider performance optimization - multiple issues detected");
+  }
+  if (results.averagePerformanceScore < 70) {
+    results.summary.recommendations.push("Overall performance score is low - prioritize performance improvements");
+  }
+
+  return results;
+}
+
+export const analyzeDirectoryPerformanceTool = tool({
+  description: "Analyzes an entire directory for performance issues, memory leaks, and optimization opportunities",
+  inputSchema: directoryAnalysisSchema,
+  execute: analyzeDirectoryPerformance,
+});
+
+// Algorithm complexity analysis
+const complexityAnalysisSchema = z.object({
+  codeSnippet: z.string().min(1).describe("The code snippet to analyze for complexity"),
+});
+
+type ComplexityAnalysisInput = z.infer<typeof complexityAnalysisSchema>;
+
+async function analyzeAlgorithmComplexity({ codeSnippet }: ComplexityAnalysisInput) {
+  const analysis = {
+    timeComplexity: "O(1)",
+    spaceComplexity: "O(1)",
+    issues: [] as string[],
+    optimizations: [] as string[],
+    complexityScore: 100
+  };
+
+  // Analyze loops for time complexity
+  const forLoops = codeSnippet.match(/for\s*\([^)]*\)/g) || [];
+  const whileLoops = codeSnippet.match(/while\s*\([^)]*\)/g) || [];
+  const forEachLoops = codeSnippet.match(/\.forEach\s*\(/g) || [];
+  const mapCalls = codeSnippet.match(/\.map\s*\(/g) || [];
+  const filterCalls = codeSnippet.match(/\.filter\s*\(/g) || [];
+  const reduceCalls = codeSnippet.match(/\.reduce\s*\(/g) || [];
+
+  const totalLoops = forLoops.length + whileLoops.length + forEachLoops.length;
+  const totalArrayOps = mapCalls.length + filterCalls.length + reduceCalls.length;
+
+  // Check for nested loops
+  const nestedPattern = /for\s*\([^}]*\{[^}]*for\s*\([^}]*\{/g;
+  const nestedLoops = codeSnippet.match(nestedPattern) || [];
+
+  if (nestedLoops.length > 0) {
+    analysis.timeComplexity = "O(n²) or higher";
+    analysis.issues.push("Nested loops detected - consider algorithm optimization");
+    analysis.complexityScore -= 30;
+  } else if (totalLoops > 0) {
+    analysis.timeComplexity = "O(n)";
+    analysis.complexityScore -= 10;
+  }
+
+  // Check for recursive calls
+  const recursivePattern = /function\s+\w+\([^)]*\)\s*\{[^}]*\w+\([^}]*\}/g;
+  const recursiveCalls = codeSnippet.match(recursivePattern) || [];
+  
+  if (recursiveCalls.length > 0) {
+    analysis.issues.push("Recursive function detected - ensure proper base case and tail recursion");
+    analysis.complexityScore -= 15;
+  }
+
+  // Check for expensive operations
+  const expensiveOps = [
+    { pattern: /\.sort\(\)/g, issue: "Array sorting - O(n log n) complexity" },
+    { pattern: /\.indexOf\(/g, issue: "Linear search - consider using Map or Set for O(1) lookups" },
+    { pattern: /\.includes\(/g, issue: "Array includes - O(n) complexity" },
+    { pattern: /JSON\.parse\(/g, issue: "JSON parsing can be expensive for large objects" }
+  ];
+
+  expensiveOps.forEach(({ pattern, issue }) => {
+    const matches = codeSnippet.match(pattern);
+    if (matches) {
+      analysis.issues.push(`${issue} (${matches.length} occurrences)`);
+      analysis.complexityScore -= matches.length * 5;
+    }
+  });
+
+  // Generate optimizations
+  if (analysis.issues.length > 0) {
+    analysis.optimizations.push("Consider using more efficient data structures (Map, Set, etc.)");
+    analysis.optimizations.push("Evaluate if operations can be batched or cached");
+    analysis.optimizations.push("Look for opportunities to reduce algorithmic complexity");
+  }
+
+  analysis.complexityScore = Math.max(0, analysis.complexityScore);
+
+  return analysis;
+}
+
+export const analyzeAlgorithmComplexityTool = tool({
+  description: "Analyzes code snippet for algorithmic complexity and optimization opportunities",
+  inputSchema: complexityAnalysisSchema,
+  execute: analyzeAlgorithmComplexity,
 });

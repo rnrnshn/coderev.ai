@@ -1,10 +1,13 @@
-# AI Code Review Agent
+# AI Code Review & Performance Analysis Agent
 
-An intelligent code review agent powered by Google's Gemini AI model that automatically analyzes code changes and provides comprehensive, actionable feedback. Built with Bun, TypeScript, and the AI SDK.
+An intelligent code review and performance analysis agent powered by Google's Gemini AI model that automatically analyzes code changes and provides comprehensive, actionable feedback with a special focus on **performance optimization**. Built with Bun, TypeScript, and the AI SDK.
 
 ## 🚀 Features
 
 - **Automated Code Review**: Analyzes git changes and provides detailed feedback
+- **Performance Analysis**: **NEW!** Identifies bottlenecks, memory leaks, and inefficient algorithms
+- **Memory Leak Detection**: Automatically detects potential memory leaks and resource management issues
+- **Algorithm Complexity Analysis**: Analyzes time and space complexity of code
 - **Multiple Review Styles**: Supports conventional, simple, and detailed commit message generation
 - **Git Integration**: Seamlessly works with your existing git workflow
 - **Markdown Output**: Generates formatted review reports
@@ -13,11 +16,14 @@ An intelligent code review agent powered by Google's Gemini AI model that automa
 
 ## 🛠️ Tools & Capabilities
 
-The agent comes equipped with three powerful tools:
+The agent comes equipped with six powerful tools:
 
 1. **File Change Analysis** - Detects and analyzes all changes in your repository
 2. **Commit Message Generation** - Creates appropriate commit messages based on changes
 3. **Review Documentation** - Writes comprehensive reviews to markdown files
+4. **Performance Analysis** - **NEW!** Analyzes individual files for performance issues and bottlenecks
+5. **Directory Performance Scan** - **NEW!** Scans entire directories for performance problems
+6. **Algorithm Complexity Analysis** - **NEW!** Analyzes code complexity and optimization opportunities
 
 ## 📋 Prerequisites
 
@@ -100,23 +106,27 @@ my-agent/
 
 ## 🤖 AI Agent Capabilities
 
-The agent focuses on these key review areas:
+The agent focuses on these key review areas with enhanced performance analysis:
 
 - ✅ **Correctness** - Bug detection and logic validation
 - 📖 **Clarity** - Code readability and documentation
 - 🔧 **Maintainability** - Code structure and complexity
 - 📏 **Consistency** - Adherence to coding standards
-- ⚡ **Performance** - Optimization opportunities
+- ⚡ **Performance Analysis** - **ENHANCED!** Comprehensive performance optimization:
+  - 🔍 **Bottleneck Detection** - Identifies slow operations and inefficient code
+  - 🧠 **Memory Leak Detection** - Finds unclosed resources and memory issues
+  - 📊 **Algorithm Complexity** - Analyzes O(n), O(n²) complexity and optimization
+  - 🚀 **Optimization Suggestions** - Recommends better data structures and patterns
 - 🔒 **Security** - Vulnerability assessment
 - 🧪 **Testing** - Test coverage and quality
 - 📈 **Scalability** - Robustness and error handling
 
 ## 📝 Output Example
 
-The agent generates reviews like:
+The agent generates comprehensive reviews with performance analysis:
 
 ```markdown
-# Code Review
+# Code Review & Performance Analysis
 
 **Generated on:** 2024-01-15T10:30:00.000Z
 
@@ -131,8 +141,40 @@ if (!input || typeof input !== 'string') {
 }
 ```
 
-⚠️ **Performance**: The regex could be compiled once and reused for better performance.
+⚠️ **Performance Issues Detected**:
+- **Memory Leak Risk**: Event listener added without cleanup (line 45)
+- **Algorithm Complexity**: O(n²) nested loops detected (lines 23-28)
+- **Inefficient Operation**: Multiple array.includes() calls - consider using Set
+
+🚀 **Performance Optimizations**:
+```typescript
+// Instead of: array.includes(item1) && array.includes(item2)
+const itemSet = new Set(array);
+if (itemSet.has(item1) && itemSet.has(item2)) { ... }
+
+// Instead of nested loops, consider:
+const result = data.flatMap(item => item.children);
 ```
+
+📊 **Performance Score**: 65/100 (Needs optimization)
+```
+
+## 🔍 Performance Analysis Features
+
+### Memory Leak Detection
+- Identifies unclosed event listeners, timers, and resources
+- Detects circular references and memory accumulation patterns
+- Suggests proper cleanup strategies
+
+### Algorithm Complexity Analysis
+- Calculates time and space complexity (O(n), O(n²), etc.)
+- Identifies nested loops and expensive operations
+- Recommends more efficient algorithms and data structures
+
+### Performance Bottleneck Detection
+- Finds inefficient DOM manipulations
+- Identifies expensive operations and slow patterns
+- Suggests optimization strategies and caching opportunities
 
 ## 🚀 Advanced Usage
 

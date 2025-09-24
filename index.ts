@@ -1,7 +1,14 @@
 import { stepCountIs, streamText } from "ai";
 import { google } from "@ai-sdk/google";
 import { SYSTEM_PROMPT } from "./prompts";
-import { getFileChangesInDirectoryTool, generateCommitMessageTool, writeReviewToMarkdownTool } from "./tools";
+import { 
+  getFileChangesInDirectoryTool, 
+  generateCommitMessageTool, 
+  writeReviewToMarkdownTool,
+  analyzeFilePerformanceTool,
+  analyzeDirectoryPerformanceTool,
+  analyzeAlgorithmComplexityTool
+} from "./tools";
 
 const codeReviewAgent = async (prompt: string) => {
   const result = streamText({
@@ -12,6 +19,9 @@ const codeReviewAgent = async (prompt: string) => {
       getFileChangesInDirectoryTool: getFileChangesInDirectoryTool,
       generateCommitMessageTool: generateCommitMessageTool,
       writeReviewToMarkdownTool: writeReviewToMarkdownTool,
+      analyzeFilePerformanceTool: analyzeFilePerformanceTool,
+      analyzeDirectoryPerformanceTool: analyzeDirectoryPerformanceTool,
+      analyzeAlgorithmComplexityTool: analyzeAlgorithmComplexityTool,
     },
     stopWhen: stepCountIs(10),
   });
@@ -23,5 +33,5 @@ const codeReviewAgent = async (prompt: string) => {
 
 // Specify which directory the code review agent should review changes in your prompt
 await codeReviewAgent(
-  "Review the code changes in '../my-agent' directory, make your reviews and suggestions file by file"
+  "Review the code changes in '../my-agent' directory with a focus on performance analysis. Analyze for bottlenecks, memory leaks, and inefficient algorithms. Make your reviews and suggestions file by file with detailed performance insights."
 );
